@@ -11,12 +11,12 @@ Il codice è versionato in questa cartella. Per collegare **il tuo** repository 
 
 ```bash
 cd /Users/corte/imessage-bot
-git remote add origin https://github.com/TUO_USER/TUO_REPO.git   # sostituisci URL
+git remote add origin https://github.com/Leonardo-Corte/imessage-bot.git
 git branch -M main
 git push -u origin main
 ```
 
-Se usi SSH: `git remote add origin git@github.com:TUO_USER/TUO_REPO.git`
+Repository attuale: [github.com/Leonardo-Corte/imessage-bot](https://github.com/Leonardo-Corte/imessage-bot) (privato). Se cloni altrove o cambi URL, aggiorna `origin` con `git remote set-url origin …`.
 
 **Cosa non finisce su Git:** `.venv/`, `output/`, file generati (vedi `.gitignore`). I contatti e `chat.db` non vanno committati.
 
