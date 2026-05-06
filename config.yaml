@@ -1,0 +1,37 @@
+filter:
+  keywords:
+    - NY
+    - NYC
+    - New York
+    - New York City
+    - Newyork
+
+templates:
+  it: "Ciao {first_name}, come stai?"
+  en: "Hey {first_name}, how are you?"
+
+defaults:
+  language: it
+  phone_region: IT
+  # Sender iMessage service id. Run list_senders.py to find available ids.
+  # Example: "iMessage;-;+39LUDOVICONUMBER"
+  # Empty = use Mac default (first iMessage account found).
+  from_id: ""
+
+rate_limit:
+  delay_min_sec: 8
+  delay_max_sec: 20
+  hourly_cap: 30
+  daily_cap: 80
+  warmup_first_day_cap: 50
+  business_hours_start: 9
+  business_hours_end: 21
+
+safety:
+  skip_cold_contacts: true
+  min_past_messages: 1
+
+paths:
+  preview_csv: output/preview.csv
+  sent_log: output/sent.json
+  chat_db: ~/Library/Messages/chat.db

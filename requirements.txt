@@ -1,0 +1,6 @@
+pyobjc-framework-Contacts>=10.0
+langdetect>=1.0.9
+typer>=0.12
+rich>=13.7
+phonenumbers>=8.13
+PyYAML>=6.0
