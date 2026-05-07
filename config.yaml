@@ -1,14 +1,10 @@
 filter:
   keywords:
-    - NY
-    - NYC
-    - New York
-    - New York City
-    - Newyork
+    - pasta eater hk
 
 templates:
-  it: "Ciao {first_name}, come stai?"
-  en: "Hey {first_name}, how are you?"
+  it: "ciao come stai?"
+  en: "ciao come stai?"
 
 defaults:
   language: it
@@ -16,7 +12,7 @@ defaults:
   # Sender iMessage service id. Run list_senders.py to find available ids.
   # Example: "iMessage;-;+39LUDOVICONUMBER"
   # Empty = use Mac default (first iMessage account found).
-  from_id: "iMessage;-;+19172870380"
+  from_id: ""
 
 rate_limit:
   delay_min_sec: 8
