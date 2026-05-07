@@ -16,7 +16,7 @@ defaults:
   # Sender iMessage service id. Run list_senders.py to find available ids.
   # Example: "iMessage;-;+39LUDOVICONUMBER"
   # Empty = use Mac default (first iMessage account found).
-  from_id: ""
+  from_id: "iMessage;-;+19172870380"
 
 rate_limit:
   delay_min_sec: 8
