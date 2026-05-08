@@ -9,6 +9,7 @@ import sys
 import time
 from datetime import datetime, date
 from pathlib import Path
+from typing import Optional
 
 import typer
 import yaml
@@ -60,7 +61,7 @@ def in_business_hours(start: int, end: int) -> bool:
 @app.command()
 def main(
     config: str = typer.Option("config.yaml"),
-    csv_path: str | None = typer.Option(None, "--csv"),
+    csv_path: Optional[str] = typer.Option(None, "--csv"),
     dry_run: bool = typer.Option(False, "--dry-run"),
     warmup: bool = typer.Option(False, "--warmup", help="Apply first-day cap instead of daily cap"),
     from_id: str = typer.Option("", "--from", help='Sender service id, e.g. "iMessage;-;+39NUMBER"'),

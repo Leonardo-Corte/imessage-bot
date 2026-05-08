@@ -4,6 +4,7 @@ import csv
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 import typer
 import yaml
@@ -30,8 +31,8 @@ def load_config(path: str = "config.yaml") -> dict:
 @app.command()
 def main(
     config: str = typer.Option("config.yaml", help="Config file"),
-    out: str | None = typer.Option(None, help="Output CSV path (overrides config)"),
-    vcf: str | None = typer.Option(None, help="Path to .vcf file (skip macOS Contacts)"),
+    out: Optional[str] = typer.Option(None, help="Output CSV path (overrides config)"),
+    vcf: Optional[str] = typer.Option(None, help="Path to .vcf file (skip macOS Contacts)"),
 ):
     cfg = load_config(config)
     out_path = Path(out or cfg["paths"]["preview_csv"])
