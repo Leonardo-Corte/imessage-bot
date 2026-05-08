@@ -6,13 +6,17 @@ Usage:
     python bot.py "pasta eater hk" "pasta night hk" --msg "ciao!"
     python bot.py nyc --vcf /path/to/contacts.vcf
     python bot.py nyc --dry-run
-    python bot.py nyc --skip-cold       # skip contacts with no past iMessage
+    python bot.py nyc --skip-cold        # skip contacts with no past iMessage
     python bot.py nyc -y                 # skip y/N prompt
+    python bot.py nyc --batch 20 --pause 900   # 20 msg, 15 min pause
 """
 from __future__ import annotations
+import json
 import os
 import random
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 import typer
@@ -39,6 +43,10 @@ def main(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip y/N confirmation"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview only, no send"),
     skip_cold: bool = typer.Option(False, "--skip-cold", help="Skip contacts with no past iMessage"),
+    batch: int = typer.Option(20, "--batch", help="Send N messages then pause"),
+    pause: int = typer.Option(900, "--pause", help="Pause seconds between batches (default 900 = 15 min)"),
+    log_file: str = typer.Option("output/bot_sent.json", "--log", help="Idempotency log path"),
+    reset: bool = typer.Option(False, "--reset", help="Ignore log; resend to everyone matched"),
     config: str = typer.Option("config.yaml", help="Config file"),
 ):
     cfg = yaml.safe_load(open(config))
@@ -59,10 +67,22 @@ def main(
     matched = [c for c in contacts if matches(pattern, c.given, c.family, c.org)]
     console.print(f"  {len(matched)} match keywords: {keywords}")
 
+    log_path = Path(log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    if log_path.exists() and not reset:
+        sent_log = json.loads(log_path.read_text())
+    else:
+        sent_log = {"entries": []}
+    already_sent = {e["contact_id"] for e in sent_log["entries"]}
+
     eligible = []
     skip_no_imessage = 0
     skip_cold_count = 0
+    skip_already = 0
     for c in matched:
+        if c.id in already_sent:
+            skip_already += 1
+            continue
         handle, _ = pick_imessage_handle(c.phones, c.emails, db_path, phone_region)
         if not handle:
             skip_no_imessage += 1
@@ -76,6 +96,7 @@ def main(
 
     console.print(f"\n[bold]Eligible:[/bold] {len(eligible)}")
     console.print(f"[bold]Skipped (no iMessage):[/bold] {skip_no_imessage}")
+    console.print(f"[bold]Skipped (already sent in log):[/bold] {skip_already}")
     if skip_cold:
         console.print(f"[bold]Skipped (cold contact):[/bold] {skip_cold_count}")
 
@@ -90,6 +111,7 @@ def main(
     console.print(f"\n[bold]Message:[/bold]  {message!r}")
     console.print(f"[bold]Sender:[/bold]   {sender or 'Mac default account'}")
     console.print(f"[bold]Total:[/bold]    {len(eligible)}")
+    console.print(f"[bold]Batch:[/bold]    {batch} msg, then {pause}s pause")
 
     if dry_run:
         console.print("\n[yellow]DRY RUN — no messages will be sent[/yellow]")
@@ -103,18 +125,35 @@ def main(
 
     sent = 0
     failed = 0
-    for c, h in eligible:
+    batch_count = 0
+    for idx, (c, h) in enumerate(eligible, start=1):
         ok = imessage_send(h, message, dry_run=False, from_id=sender)
         if ok:
             sent += 1
-            console.print(f"  [OK]   {c.full_name}")
+            console.print(f"  [{idx}/{len(eligible)}] [OK]   {c.full_name}")
+            sent_log["entries"].append({
+                "contact_id": c.id,
+                "full_name": c.full_name,
+                "handle": h,
+                "sent_at": datetime.now().isoformat(timespec="seconds"),
+            })
+            log_path.write_text(json.dumps(sent_log, indent=2))
+            batch_count += 1
         else:
             failed += 1
-            console.print(f"  [FAIL] {c.full_name}")
-        delay = random.uniform(rl["delay_min_sec"], rl["delay_max_sec"])
-        time.sleep(delay)
+            console.print(f"  [{idx}/{len(eligible)}] [FAIL] {c.full_name}")
+
+        if batch_count >= batch and idx < len(eligible):
+            console.print(f"\n[yellow]Batch of {batch} done. Pausing {pause}s ({pause//60} min). Ctrl-C to stop.[/yellow]")
+            time.sleep(pause)
+            batch_count = 0
+            console.print("[yellow]Resuming.[/yellow]\n")
+        else:
+            delay = random.uniform(rl["delay_min_sec"], rl["delay_max_sec"])
+            time.sleep(delay)
 
     console.print(f"\n[green]Done. Sent: {sent} | Failed: {failed} | Total: {len(eligible)}[/green]")
+    console.print(f"[green]Log: {log_path}[/green]")
 
 
 if __name__ == "__main__":
