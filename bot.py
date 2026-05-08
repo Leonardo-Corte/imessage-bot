@@ -52,6 +52,7 @@ console = Console()
 def main(
     keywords: List[str] = typer.Argument(..., help="Keywords (matched in name/family/org)"),
     message: str = typer.Option("ciao come stai?", "--msg", "-m", help="Message text"),
+    msg_file: Optional[str] = typer.Option(None, "--msg-file", help="Read message text from file (overrides --msg)"),
     vcf: Optional[str] = typer.Option(None, "--vcf", help="Use .vcf file instead of macOS Contacts"),
     from_id: Optional[str] = typer.Option(None, "--from", help="Sender service id"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip y/N confirmation"),
@@ -69,6 +70,9 @@ def main(
     db_path = os.path.expanduser(cfg["paths"]["chat_db"])
     phone_region = cfg["defaults"].get("phone_region", "IT")
     sender = from_id or cfg["defaults"].get("from_id") or None
+
+    if msg_file:
+        message = Path(msg_file).read_text(encoding="utf-8")
 
     if vcf:
         console.print(f"[bold]Loading contacts from {vcf}[/bold]")

@@ -29,7 +29,11 @@ end tell
 
 
 def _escape(s: str) -> str:
-    return s.replace("\\", "\\\\").replace('"', '\\"')
+    s = s.replace("\\", "\\\\").replace('"', '\\"')
+    # AppleScript: turn newlines into `" & return & "` so the multi-line
+    # string concatenates inside the wrapping quotes from the template.
+    s = s.replace("\r\n", "\n").replace("\n", '" & return & "')
+    return s
 
 
 def send(handle: str, message: str, dry_run: bool = False, timeout: int = 30,
