@@ -27,8 +27,22 @@ from lib.contacts import load_contacts
 from lib.vcard import parse_vcf
 from lib.filter import build_pattern, matches
 from lib.chatdb import get_messages_with
-from lib.imessage import pick_imessage_handle
+from lib.imessage import pick_imessage_handle, normalize_phone
 from lib.messenger import send as imessage_send
+
+
+def pick_handle_force(phones, emails, default_region):
+    """Return (handle, type) without requiring chat.db history.
+    First valid normalized phone, else first email."""
+    for raw in phones:
+        e164 = normalize_phone(raw, default_region)
+        if e164:
+            return e164, "phone"
+    for em in emails:
+        em_l = em.strip().lower()
+        if em_l:
+            return em_l, "email"
+    return None, "none"
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -43,6 +57,7 @@ def main(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip y/N confirmation"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview only, no send"),
     skip_cold: bool = typer.Option(False, "--skip-cold", help="Skip contacts with no past iMessage"),
+    force: bool = typer.Option(False, "--force", help="Don't require iMessage history; use first valid phone/email"),
     batch: int = typer.Option(20, "--batch", help="Send N messages then pause"),
     pause: int = typer.Option(900, "--pause", help="Pause seconds between batches (default 900 = 15 min)"),
     log_file: str = typer.Option("output/bot_sent.json", "--log", help="Idempotency log path"),
@@ -83,7 +98,10 @@ def main(
         if c.id in already_sent:
             skip_already += 1
             continue
-        handle, _ = pick_imessage_handle(c.phones, c.emails, db_path, phone_region)
+        if force:
+            handle, _ = pick_handle_force(c.phones, c.emails, phone_region)
+        else:
+            handle, _ = pick_imessage_handle(c.phones, c.emails, db_path, phone_region)
         if not handle:
             skip_no_imessage += 1
             continue
