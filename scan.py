@@ -53,8 +53,13 @@ def main(
         contacts = load_contacts()
     console.print(f"  {len(contacts)} total")
 
-    matched = [c for c in contacts if matches(pattern, c.given, c.family, c.org)]
-    console.print(f"  {len(matched)} match NY filter")
+    keywords = cfg["filter"].get("keywords") or []
+    if keywords:
+        matched = [c for c in contacts if matches(pattern, c.given, c.family, c.org)]
+        console.print(f"  {len(matched)} match keyword filter")
+    else:
+        matched = list(contacts)
+        console.print(f"  {len(matched)} (no filter — all contacts)")
 
     rows = []
     summary = {"sent_eligible": 0, "skip_no_imessage": 0, "skip_cold": 0}

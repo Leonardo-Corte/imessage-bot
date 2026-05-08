@@ -1,6 +1,5 @@
 filter:
-  keywords:
-    - pasta eater hk
+  keywords: []
 
 templates:
   it: "ciao come stai?"

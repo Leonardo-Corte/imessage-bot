@@ -65,6 +65,7 @@ def main(
     dry_run: bool = typer.Option(False, "--dry-run"),
     warmup: bool = typer.Option(False, "--warmup", help="Apply first-day cap instead of daily cap"),
     from_id: str = typer.Option("", "--from", help='Sender service id, e.g. "iMessage;-;+39NUMBER"'),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip interactive y/n confirmation"),
 ):
     cfg = load_config(config)
     rl = cfg["rate_limit"]
@@ -113,6 +114,18 @@ def main(
     if not eligible:
         console.print("[green]Nothing to send.[/green]")
         return
+
+    console.print("\n[bold]Contacts to message:[/bold]")
+    for r in eligible:
+        console.print(f"  - {r['full_name']}  ({r['handle']})  [{r['language']}]")
+    console.print(f"\n[bold]Total: {len(eligible)} contacts[/bold]")
+    console.print(f"[bold]Message template:[/bold] {eligible[0]['message']!r}")
+
+    if not yes and not dry_run:
+        ans = input("\nProceed with send? (y/N): ").strip().lower()
+        if ans != "y":
+            console.print("[red]Aborted.[/red]")
+            return
 
     console.print("[yellow]Starting in 10 sec. Ctrl-C to abort.[/yellow]")
     for i in range(10, 0, -1):
